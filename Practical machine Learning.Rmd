@@ -23,7 +23,7 @@ The data for this project come from this source: http://web.archive.org/web/2016
 
 
 
-First, we import the training and testing dataset and we remove the variables that are full of NA or with nonsignificant variance as they will not improve the quality of the model. 
+First, we import the training and testing dataset and we remove the variables that are full of NA or with nonsignificant variance as well as the number of the sample observation, as they will not improve the quality of the model. 
 
 ```{r}
 library (caret)
@@ -41,8 +41,13 @@ testFile  <- "./data/pml-testing.csv"
 train_data <- read.csv(trainFile, header=T)
 nzv <- nearZeroVar(train_data)
 train_data <-  train_data[,-nzv]
-train_data <- train_data[,colMeans(is.na(train_data)) < .9] 
+train_data <- train_data[,colMeans(is.na(train_data)) == 0] 
+train_data  <- train_data [,-1]
+
 validation_data <- read.csv(testFile, header = T)
+validation_data <-  validation_data[,-nzv]
+validation_data <- validation_data[,colMeans(is.na(validation_data)) == 0] 
+validation_data <- validation_data[,-1]
 
 ```
 
@@ -102,7 +107,7 @@ cmrf
 
 ```
 
-The results from our random forest model are excellent as the accuracy is 99,98% and, therefore, our expected out-of-sample error is 0,02%. Consequently, there is no need to test another type of model as our results are already optimal. Therefore we obtain a high level of accuracy to predict the type of barebell lift the participant is doing based on the measurements obtained with sport devices.
+The results from our random forest model are excellent as the accuracy is 99,9% and, therefore, our expected out-of-sample error is 0,1%. Consequently, there is no need to test another type of model as our results are already optimal. Therefore we obtain a high level of accuracy to predict the type of barebell lift the participant is doing based on the measurements obtained with sport devices.
 
 # Prediction
 

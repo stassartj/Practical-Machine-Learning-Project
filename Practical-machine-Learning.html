@@ -394,8 +394,9 @@ cite them as they have been very generous in allowing their data to be
 used for this kind of assignment.</p>
 <p>#Getting and cleaning the data</p>
 <p>First, we import the training and testing dataset and we remove the
-variables that are full of NA or with nonsignificant variance as they
-will not improve the quality of the model.</p>
+variables that are full of NA or with nonsignificant variance as well as
+the number of the sample observation, as they will not improve the
+quality of the model.</p>
 <pre class="r"><code>library (caret)</code></pre>
 <pre><code>## Carregando pacotes exigidos: ggplot2</code></pre>
 <pre><code>## Carregando pacotes exigidos: lattice</code></pre>
@@ -419,8 +420,13 @@ testFile  &lt;- &quot;./data/pml-testing.csv&quot;
 train_data &lt;- read.csv(trainFile, header=T)
 nzv &lt;- nearZeroVar(train_data)
 train_data &lt;-  train_data[,-nzv]
-train_data &lt;- train_data[,colMeans(is.na(train_data)) &lt; .9] 
-validation_data &lt;- read.csv(testFile, header = T)</code></pre>
+train_data &lt;- train_data[,colMeans(is.na(train_data)) == 0] 
+train_data  &lt;- train_data [,-1]
+
+validation_data &lt;- read.csv(testFile, header = T)
+validation_data &lt;-  validation_data[,-nzv]
+validation_data &lt;- validation_data[,colMeans(is.na(validation_data)) == 0] 
+validation_data &lt;- validation_data[,-1]</code></pre>
 </div>
 <div id="partittioning" class="section level1">
 <h1>Partittioning</h1>
@@ -460,16 +466,16 @@ model_rf$finalModel</code></pre>
 ##  randomForest(x = x, y = y, ntree = 100, mtry = min(param$mtry,      ncol(x))) 
 ##                Type of random forest: classification
 ##                      Number of trees: 100
-## No. of variables tried at each split: 41
+## No. of variables tried at each split: 40
 ## 
-##         OOB estimate of  error rate: 0.02%
+##         OOB estimate of  error rate: 0.08%
 ## Confusion matrix:
 ##      A    B    C    D    E  class.error
 ## A 3906    0    0    0    0 0.0000000000
 ## B    1 2657    0    0    0 0.0003762227
-## C    0    1 2395    0    0 0.0004173623
-## D    0    0    1 2251    0 0.0004440497
-## E    0    0    0    0 2525 0.0000000000</code></pre>
+## C    0    4 2391    1    0 0.0020868114
+## D    0    0    3 2249    0 0.0013321492
+## E    0    0    0    2 2523 0.0007920792</code></pre>
 <p>Now that we have our model, we will test it on our testing sample
 that we kept to build our model.</p>
 <pre class="r"><code>pred_rf &lt;- predict(model_rf, testing)
@@ -479,37 +485,37 @@ cmrf</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1674    0    0    0    0
-##          B    0 1139    1    0    0
-##          C    0    0 1025    0    0
-##          D    0    0    0  964    0
-##          E    0    0    0    0 1082
+##          A 1674    2    0    0    0
+##          B    0 1136    1    0    0
+##          C    0    1 1025    1    0
+##          D    0    0    0  962    0
+##          E    0    0    0    1 1082
 ## 
 ## Overall Statistics
-##                                      
-##                Accuracy : 0.9998     
-##                  95% CI : (0.9991, 1)
-##     No Information Rate : 0.2845     
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16  
-##                                      
-##                   Kappa : 0.9998     
-##                                      
-##  Mcnemar&#39;s Test P-Value : NA         
+##                                           
+##                Accuracy : 0.999           
+##                  95% CI : (0.9978, 0.9996)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9987          
+##                                           
+##  Mcnemar&#39;s Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            1.0000   1.0000   0.9990   1.0000   1.0000
-## Specificity            1.0000   0.9998   1.0000   1.0000   1.0000
-## Pos Pred Value         1.0000   0.9991   1.0000   1.0000   1.0000
-## Neg Pred Value         1.0000   1.0000   0.9998   1.0000   1.0000
+## Sensitivity            1.0000   0.9974   0.9990   0.9979   1.0000
+## Specificity            0.9995   0.9998   0.9996   1.0000   0.9998
+## Pos Pred Value         0.9988   0.9991   0.9981   1.0000   0.9991
+## Neg Pred Value         1.0000   0.9994   0.9998   0.9996   1.0000
 ## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-## Detection Rate         0.2845   0.1935   0.1742   0.1638   0.1839
-## Detection Prevalence   0.2845   0.1937   0.1742   0.1638   0.1839
-## Balanced Accuracy      1.0000   0.9999   0.9995   1.0000   1.0000</code></pre>
+## Detection Rate         0.2845   0.1930   0.1742   0.1635   0.1839
+## Detection Prevalence   0.2848   0.1932   0.1745   0.1635   0.1840
+## Balanced Accuracy      0.9998   0.9986   0.9993   0.9990   0.9999</code></pre>
 <p>The results from our random forest model are excellent as the
-accuracy is 99,98% and, therefore, our expected out-of-sample error is
-0,02%. Consequently, there is no need to test another type of model as
+accuracy is 99,9% and, therefore, our expected out-of-sample error is
+0,1%. Consequently, there is no need to test another type of model as
 our results are already optimal. Therefore we obtain a high level of
 accuracy to predict the type of barebell lift the participant is doing
 based on the measurements obtained with sport devices.</p>
@@ -520,7 +526,7 @@ based on the measurements obtained with sport devices.</p>
 set.</p>
 <pre class="r"><code>predValidation &lt;- predict(model_rf, newdata=validation_data)
 predValidation</code></pre>
-<pre><code>##  [1] A A A A A A A A A A A A A A A A A A A A
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 </div>
 
