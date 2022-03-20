@@ -1,0 +1,115 @@
+---
+title: "Practical Machine Learning project"
+author: "Joachim"
+date: "19/03/2022"
+output: html_document
+---
+
+# Backgrounf Information
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: (http://groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset).
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+#Getting and cleaning the data
+
+
+
+First, we import the training and testing dataset and we remove the variables that are full of NA or with nonsignificant variance as they will not improve the quality of the model. 
+
+```{r}
+library (caret)
+
+
+trainUrl <-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+dir.create("./data")
+# download.file(trainUrl, "./data/pml-training.csv")
+# download.file(testUrl, "./data/pml-testing.csv")
+
+trainFile <- "./data/pml-training.csv"
+testFile  <- "./data/pml-testing.csv"
+train_data <- read.csv(trainFile, header=T)
+nzv <- nearZeroVar(train_data)
+train_data <-  train_data[,-nzv]
+train_data <- train_data[,colMeans(is.na(train_data)) < .9] 
+validation_data <- read.csv(testFile, header = T)
+
+```
+
+# Partittioning 
+
+Then we split or dataset into a training and testing samples to build our model.
+
+```{r}
+set.seed(346)
+
+
+Partition <- createDataPartition(y=train_data$classe, p=0.7, list=FALSE)
+
+train <- train_data[Partition, ]
+testing <- train_data[-Partition, ]
+
+```
+
+
+# Modeling
+
+Now, we build a model. As random forest is usually the best performing model we will try with this one and assess its accuracy to see if we need to find another model. We use  a 3-fold cross-validation to improve the quality of our model.
+
+We limit the number of trees to 100 because of the limited techncal performance of our computer.
+
+
+
+```{r}
+
+fitControl <- trainControl(method="cv", number=3)
+
+
+model_rf <- train(
+  classe ~ ., 
+  data=train,
+  method='rf',
+  trControl=fitControl,
+  ntree=100
+)
+
+
+model_rf$finalModel
+
+
+
+```
+
+
+
+Now that we have our model, we will test it on our testing sample that we kept to build our model.
+
+```{r}
+
+pred_rf <- predict(model_rf, testing)
+cmrf <- confusionMatrix(pred_rf, factor(testing$classe))
+cmrf
+
+```
+
+The results from our random forest model are excellent as the accuracy is 99,98% and, therefore, our expected out-of-sample error is 0,02%. Consequently, there is no need to test another type of model as our results are already optimal. Therefore we obtain a high level of accuracy to predict the type of barebell lift the participant is doing based on the measurements obtained with sport devices.
+
+# Prediction
+
+
+Finally we use our model to predict the values of the validation set.
+
+```{r}
+predValidation <- predict(model_rf, newdata=validation_data)
+predValidation
+```
+
